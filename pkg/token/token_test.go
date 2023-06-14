@@ -359,7 +359,7 @@ func TestFormatJson(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			expiry, _ := time.Parse(time.RFC3339, "2012-11-01T22:08:41+00:00")
 			token := "token"
-			g, _ := NewGenerator(true, true)
+			g, _ := NewGenerator(true, true, "")
 
 			if c.EnvKey != "" {
 				marshal := make([]byte, 0)

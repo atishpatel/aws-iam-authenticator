@@ -39,6 +39,7 @@ var tokenCmd = &cobra.Command{
 		forwardSessionName := viper.GetBool("forwardSessionName")
 		sessionName := viper.GetString("sessionName")
 		cache := viper.GetBool("cache")
+		credsTimeout := viper.GetString("creds-timeout")
 
 		if clusterID == "" {
 			fmt.Fprintf(os.Stderr, "Error: cluster ID not specified\n")
@@ -55,7 +56,7 @@ var tokenCmd = &cobra.Command{
 		var tok token.Token
 		var out string
 		var err error
-		gen, err := token.NewGenerator(forwardSessionName, cache)
+		gen, err := token.NewGenerator(forwardSessionName, cache, credsTimeout)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "could not get token: %v\n", err)
 			os.Exit(1)
@@ -92,6 +93,7 @@ func init() {
 		false,
 		"Enable mapping a federated sessions caller-specified-role-name attribute onto newly assumed sessions. NOTE: Only applicable when a new role is requested via --role")
 	tokenCmd.Flags().Bool("cache", false, "Cache the credential on disk until it expires. Uses the aws profile specified by AWS_PROFILE or the default profile.")
+	tokenCmd.Flags().String("creds-timeout", "", "Timeout for the creds process. Use a golang time.Duration string (1s,1m,30m)")
 	viper.BindPFlag("region", tokenCmd.Flags().Lookup("region"))
 	viper.BindPFlag("role", tokenCmd.Flags().Lookup("role"))
 	viper.BindPFlag("externalID", tokenCmd.Flags().Lookup("external-id"))
@@ -99,5 +101,6 @@ func init() {
 	viper.BindPFlag("forwardSessionName", tokenCmd.Flags().Lookup("forward-session-name"))
 	viper.BindPFlag("sessionName", tokenCmd.Flags().Lookup("session-name"))
 	viper.BindPFlag("cache", tokenCmd.Flags().Lookup("cache"))
+	viper.BindPFlag("creds-timeout", tokenCmd.Flags().Lookup("creds-timeout"))
 	viper.BindEnv("role", "DEFAULT_ROLE")
 }

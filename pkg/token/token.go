@@ -30,6 +30,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/processcreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -184,13 +185,23 @@ type Generator interface {
 type generator struct {
 	forwardSessionName bool
 	cache              bool
+	credsTimeout       time.Duration
 }
 
 // NewGenerator creates a Generator and returns it.
-func NewGenerator(forwardSessionName bool, cache bool) (Generator, error) {
+func NewGenerator(forwardSessionName bool, cache bool, credsTimeoutStr string) (Generator, error) {
+	var credsTimeout time.Duration
+	var err error
+	if credsTimeoutStr != "" {
+		credsTimeout, err = time.ParseDuration(credsTimeoutStr)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return generator{
 		forwardSessionName: forwardSessionName,
 		cache:              cache,
+		credsTimeout:       credsTimeout,
 	}, nil
 }
 
@@ -234,13 +245,23 @@ func (g generator) GetWithOptions(options *GetTokenOptions) (Token, error) {
 	if options.ClusterID == "" {
 		return Token{}, fmt.Errorf("ClusterID is required")
 	}
-
 	if options.Session == nil {
+		// set timeout
+		var credOptions *session.CredentialsProviderOptions
+		if g.credsTimeout != 0 {
+			credOptions = &session.CredentialsProviderOptions{
+				ProcessProviderOptions: func(pp *processcreds.ProcessProvider) {
+					pp.Timeout = g.credsTimeout
+				},
+			}
+		}
+
 		// create a session with the "base" credentials available
 		// (from environment variable, profile files, EC2 metadata, etc)
 		sess, err := session.NewSessionWithOptions(session.Options{
-			AssumeRoleTokenProvider: StdinStderrTokenProvider,
-			SharedConfigState:       session.SharedConfigEnable,
+			AssumeRoleTokenProvider:    StdinStderrTokenProvider,
+			SharedConfigState:          session.SharedConfigEnable,
+			CredentialsProviderOptions: credOptions,
 		})
 		if err != nil {
 			return Token{}, fmt.Errorf("could not create session: %v", err)
