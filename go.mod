@@ -4,10 +4,8 @@ go 1.19
 
 replace golang.org/x/net v0.3.1-0.20221206200815-1e63c2f08a10 => golang.org/x/net v0.7.0
 
-replace github.com/aws/aws-sdk-go v1.44.213 => github.com/atishpatel/aws-sdk-go v0.0.0-20230614205456-79904551134d
-
 require (
-	github.com/aws/aws-sdk-go v1.44.213
+	github.com/aws/aws-sdk-go v1.44.300
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gofrs/flock v0.8.1
 	github.com/manifoldco/promptui v0.9.0
